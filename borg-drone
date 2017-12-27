@@ -1,0 +1,94 @@
+#! /bin/bash
+
+OPTIND=1
+config=/etc/borg-drone/config
+verbose=0
+
+while getopts "hvc:e:" opt; do
+  case "$opt" in
+  h)
+    show_help
+    exit 1
+    ;;
+  v)
+    verbose=1
+    ;;
+  c)
+    config=$OPTARG
+    ;;
+  esac
+done
+
+shift $((OPTIND-1))
+[ "$1" = "--" ] && shift
+
+summary=
+detail=
+begin=`date +%H:%M`
+
+echo ""
+echo ""
+echo "****************************************************************"
+echo "BORG-DRONE starting at" `date`
+echo "****************************************************************"
+echo "Sourcing config from $config"
+. $config
+echo "Repositories found: ${REPOS[*]}"
+
+for repo in "${REPOS[@]}"; do
+  date=`date -Iminutes`
+
+  echo ""
+  echo "***** Starting backup for repo ${repo} at `date`"
+  repovar="${repo}_repo"
+  repository="${!repovar-${ALL_repo}${repo}}"
+  archive="${repository}::${repo}-${date}"
+  echo "Archive: $archive"
+  createvar="${repo}_create"
+  pathvar="${repo}_path"
+  CMD="borg create ${ALL_create} ${!createvar} ${archive} ${!pathvar}"
+  echo $CMD
+  if ! eval "$CMD"; then
+    summary=FAILED
+    detail="$detail\nFAILED: $CMD"
+    continue
+  fi
+
+  echo "===== Starting check for repo ${repo} at `date`"
+  echo "Repository: $repository"
+  checkvar="${repo}_check"
+  CMD="borg check ${ALL_check} ${!checkvar} ${repository}"
+  echo $CMD
+  if ! eval "$CMD >&/dev/null"; then
+    summary=FAILED
+    detail="$detail\nFAILED: $CMD"
+    echo "Failure exit code from borg-check"
+    continue
+  else
+    echo "Success exit code from borg-check"
+  fi
+
+  echo "===== Starting pruning of repo ${repo} at `date`"
+  prunevar="${repo}_prune"
+  CMD="borg prune ${ALL_prune} ${!prunevar} ${repository}"
+  echo $CMD
+  if ! eval "$CMD"; then
+    summary=FAILED
+    detail="$detail\nFAILED: $CMD"
+    continue
+  fi
+
+done
+
+ending=`date +%H:%M`
+if [[ -z $summary ]]; then
+  summary="Borg backup successful: $begin - $ending"
+else
+  summary="Borg backup FAILED: $begin - $ending"
+fi
+if [[ -n $email ]]; then
+  echo "emailing $email: $summary"
+  echo $detail | /usr/bin/mail -s "$summary" $email
+fi
+
+echo "BORG-DRONE ending at" `date`

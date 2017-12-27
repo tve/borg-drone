@@ -1,0 +1,53 @@
+# Config file for borg-drone, this is sourced by bash
+
+# List of repository names used in this config
+REPOS=(home music photos)
+
+# Passphrase - best is to source it from a protected file
+export BORG_PASSPHRASE=`cat /root/.borg-key`
+
+# ===== Definitions for all repositories
+
+# repo prefix - prefixed to repo name
+ALL_repo="backup@backup:/big/h/"
+# options for borg create
+ALL_create="--show-rc -s -e .cache -n"
+# options for borg check
+ALL_check="--show-rc --last 3"
+# options for borg prune
+ALL_prune="--show-rc --keep-within 2d -n"
+
+# ===== Definitions for repository "h"
+
+# paths to back up
+home_path="/big/home /etc /root /big/usr-local"
+# additional options for borg create
+home_create="-C lzma"
+# additional options for borg check
+home_check=
+# additional options for borg prune
+home_prune="-d 7 -w 4 -m 12 -y 20"
+
+# ===== Definitions for repository "music"
+
+# custom repository
+music_repo="backup@backup:/big/h/MusicFLAC"
+# paths to backup
+music_path="/big/MusicFLAC"
+# additional options for borg create
+music_create="-C none"
+# additional options for borg check
+music_check=
+# additional options for borg prune
+music_prune="-d 1 -w 1 -m 2 -y 20"
+
+# ===== Definitions for repository "photos"
+
+# paths to backup
+photos_path="/soumak/photos"
+# additional options for borg create
+photos_create="-C none"
+# additional options for borg check
+photos_check=
+# additional options for borg prune
+photos_prune="-d 7 -w 1 -m 6 -y 20"
