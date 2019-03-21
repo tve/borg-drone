@@ -81,10 +81,11 @@ for repo in "${REPOS[@]}"; do
 done
 
 ending=`date +%H:%M`
+host=$(hostname)
 if [[ -z $summary ]]; then
-  summary="Borg backup successful: $begin - $ending"
+  summary="Borg backup on $host successful: $begin - $ending"
 else
-  summary="Borg backup FAILED: $begin - $ending"
+  summary="Borg backup on $host FAILED: $begin - $ending"
 fi
 if [[ -n $email ]]; then
   echo "emailing $email: $summary"
