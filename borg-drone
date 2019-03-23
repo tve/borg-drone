@@ -1,7 +1,7 @@
 #! /bin/bash
 
 OPTIND=1
-config=/etc/borg-drone/config
+config=/etc/borg-drone
 verbose=0
 
 while getopts "hvc:e:" opt; do
@@ -22,8 +22,9 @@ done
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 
+exec 6>&1
+exec >/tmp/borg-drone.$$ 2>&1
 summary=
-detail=
 begin=`date +%H:%M`
 
 echo ""
@@ -50,7 +51,6 @@ for repo in "${REPOS[@]}"; do
   echo $CMD
   if ! eval "$CMD"; then
     summary=FAILED
-    detail="$detail\nFAILED: $CMD"
     continue
   fi
 
@@ -61,7 +61,6 @@ for repo in "${REPOS[@]}"; do
   echo $CMD
   if ! eval "$CMD >&/dev/null"; then
     summary=FAILED
-    detail="$detail\nFAILED: $CMD"
     echo "Failure exit code from borg-check"
     continue
   else
@@ -74,7 +73,6 @@ for repo in "${REPOS[@]}"; do
   echo $CMD
   if ! eval "$CMD"; then
     summary=FAILED
-    detail="$detail\nFAILED: $CMD"
     continue
   fi
 
@@ -89,7 +87,10 @@ else
 fi
 if [[ -n $email ]]; then
   echo "emailing $email: $summary"
-  echo $detail | /usr/bin/mail -s "$summary" $email
+  /usr/bin/mail -s "$summary" $email </tmp/borg-drone.$$
 fi
 
 echo "BORG-DRONE ending at" `date`
+exec 1>&6
+cat /tmp/borg-drone.$$
+rm -f /tmp/borg-drone.$$
