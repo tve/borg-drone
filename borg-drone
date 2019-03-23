@@ -81,9 +81,9 @@ done
 ending=`date +%H:%M`
 host=$(hostname)
 if [[ -z $summary ]]; then
-  summary="Borg backup on $host successful: $begin - $ending"
+    summary="Borg backup on $host ($REPOS) successful: $begin - $ending"
 else
-  summary="Borg backup on $host FAILED: $begin - $ending"
+    summary="Borg backup on $host ($REPOS) FAILED: $begin - $ending"
 fi
 if [[ -n $email ]]; then
   echo "emailing $email: $summary"
