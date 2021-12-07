@@ -40,7 +40,9 @@ for sv in ${SUBS//,/ }; do
   echo "Fetching incremental from ${mr[0]} to ${mr[1]}"
   btrfs subvolume delete $ROOT/$(basename ${mr[1]}) 2>/dev/null || true
   time ssh $REMOTE "btrfs send -p ${mr[0]} ${mr[1]}" | \
-    ( btrfs receive $ROOT || EXIT=1 )
+    ( btrfs receive $ROOT || ( \
+      echo "You may have to ssh $REMOTE btrfs send ${mr[0]} | btrfs receive $ROOT"; \
+      EXIT=1 ))
 done
 echo "=== Done, exit=$EXIT" $(date)
 exit $EXIT
