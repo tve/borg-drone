@@ -3,6 +3,7 @@
 
 suffix=$(date +%a | tr 'A-Z' 'a-z')  # mon, tue, ...
 
+date
 for vol in "$@"; do
   [[ -d "$vol" ]] || ( echo "$vol not found"; exit 1 )
   touch $vol
